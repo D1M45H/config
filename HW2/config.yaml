@@ -1,0 +1,3 @@
+graphviz_path: "/usr/bin/dot"
+repo_path: "/path/to/repo"
+output_file: "dependencies.png"
