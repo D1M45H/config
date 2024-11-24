@@ -1,0 +1,9 @@
+let db_name = "my_database";
+let db_user = "admin";
+let db_password = "secret";
+
+database = [
+    db_name,
+    db_user,
+    db_password
+];

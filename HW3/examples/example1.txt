@@ -1,0 +1,7 @@
+let port = 8080;
+let host = "localhost";
+
+server = [
+    host,
+    port
+];

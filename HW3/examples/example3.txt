@@ -1,0 +1,7 @@
+let max_users = 100;
+let timeout = 30;
+
+app_settings = [
+    max_users,
+    timeout
+];
