@@ -76,7 +76,6 @@ class ConfigConverter:
         return line.startswith('{') and line.endswith('}')
 
     def evaluate_expression(self, expression):
-        # Упрощенная реализация для примера
         expr_content = expression[1:-1].strip()
         parts = expr_content.split()
         operator = parts[0]
