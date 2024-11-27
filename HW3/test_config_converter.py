@@ -11,13 +11,13 @@ class TestConfigConverter(unittest.TestCase):
         self.assertEqual(self.converter.constants['test_var'], 5)
 
     def test_array_parsing(self):
-        result = self.converter.parse_array("[1, 2, 3]")
-        self.assertEqual(result, [1, 2, 3])
+        result = self.converter.parse_array("[[1, 2], 3]")
+        self.assertEqual(result, [[1, 2], 3])
 
     def test_expression_evaluation(self):
-        self.converter.handle_constant_declaration("let a = 10;")
+        self.converter.handle_constant_declaration("let a = {+ 10 2};")
         result = self.converter.evaluate_expression("{+ a 5}")
-        self.assertEqual(result, 15)
+        self.assertEqual(result, 17)
 
 if __name__ == '__main__':
     unittest.main()
