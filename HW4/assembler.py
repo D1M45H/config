@@ -1,54 +1,74 @@
-import struct
-import sys
+import argparse
 import yaml
 
-def assemble(input_file, output_file, log_file):
-    instruction_set = {
-        'LOAD_CONST': 0xD,
-        'READ_MEM': 0xF,
-        'WRITE_MEM': 0x7,
-        'BINARY_OP_LT': 0x4
-    }
-    
+# Функция для записи логов операции
+def log_operation(log_path, operation_code, *args):
+    if log_path is not None:
+        with open(log_path, "a", encoding="utf-8") as log_file:
+            log_file.write(f"A={operation_code},B={args[0]},C={args[1]}\n")
+
+# Функция сериализации команды в бинарный формат
+def serializer(cmd, fields, size):
+    bits = 0
+    bits |= cmd  # Устанавливаем код операции в младшие биты
+    for value, offset in fields:
+        bits |= (value << offset)  # Добавляем операнды в соответствующие биты
+    return bits.to_bytes(size, "little")
+
+# Основная функция ассемблера
+def assembler(instructions, log_path=None):
+    byte_code = []
+    for operation, *args in instructions:
+        if operation == "load_const":
+            B, C = args
+            # Команда "Загрузка константы" - A=9, B=Адрес, C=Константа
+            byte_code += serializer(9, ((B, 4), (C, 15)), 6)
+            log_operation(log_path, 9, B, C)
+        elif operation == "read_mem":
+            B, C, D = args
+            # Команда "Чтение значения из памяти" - A=15, B=Адрес, C=Адрес D=Смещение
+            byte_code += serializer(15, ((B, 4), (C, 15), (D, 26)), 6)
+            log_operation(log_path, 15, B, C, D)
+        elif operation == "write_mem":
+            B, C = args
+            # Команда "Запись значения в память" - A=7, B=Адрес, C=Адрес
+            byte_code += serializer(7, ((B, 4), (C, 15)), 6)
+            log_operation(log_path, 7, B, C)
+        elif operation == "bin_op":
+            B, C, D = args
+            # Команда "Бинарная операция: <" - A=14, B=Адрес, C=Адрес, D=Адрес
+            byte_code += serializer(4, ((B, 4), (C, 15), (D, 26)), 6)
+            log_operation(log_path, 4, B, C, D)
+    return byte_code
+
+# Функция для чтения инструкций из yaml файла и их сборки
+def assemble(instructions_path: str, log_path=None):
     instructions = []
-    log = {}
+    with open(instructions_path, "r", encoding="utf-8") as f:
+        reader = yaml.safe_load(f)
+        for row in reader:
+            operation = row[0].strip()
+            args = [int(x) if x.isdigit() else x for x in row[1:]]
+            instructions.append([operation] + args)
+    return assembler(instructions, log_path)
 
-    with open(input_file, 'r') as f:
-        for line in f:
-            parts = line.strip().split()
-            if not parts:
-                continue
-            
-            op = parts[0]
-            if op not in instruction_set:
-                raise ValueError(f"Unknown operation: {op}")
+# Сохранение бинарных данных в файл
+def save_to_bin(assembled_instructions, binary_path):
+    with open(binary_path, "wb") as binary_file:
+        binary_file.write(bytes(assembled_instructions))
 
-            A = instruction_set[op]
-            B = int(parts[1])
-            C = int(parts[2])
-            D = int(parts[3]) if len(parts) > 3 else 0
-
-            if op == 'LOAD_CONST':
-                instruction = struct.pack('>BHHH', A, B, C, 0)
-            elif op == 'READ_MEM':
-                instruction = struct.pack('>BHHH', A, B, C, D)
-            elif op == 'WRITE_MEM':
-                instruction = struct.pack('>BHHH', A, B, C, 0)
-            elif op == 'BINARY_OP_LT':
-                instruction = struct.pack('>BHHH', A, B, C, D)
-
-            instructions.append(instruction)
-            log[f"{op} A={A} B={B} C={C} D={D}"] = instruction.hex()
-
-    with open(output_file, 'wb') as f:
-        for instruction in instructions:
-            f.write(instruction)
-
-    with open(log_file, 'w') as f:
-        yaml.dump(log, f)
-
+# Главная точка входа
 if __name__ == "__main__":
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    log_file = sys.argv[3]
-    assemble(input_file, output_file, log_file)
+    parser = argparse.ArgumentParser(description="Assembling the instructions yaml file to the byte-code.")
+    parser.add_argument("instructions_path", help="Path to the instructions yaml file")
+    parser.add_argument("binary_path", help="Path to the binary file (bin)")
+    parser.add_argument("log_path", help="Path to the log file (yaml)")
+    args = parser.parse_args()
+    
+    # Создание лог файла
+    with open(args.log_path, "w", encoding="utf-8") as log_file:
+        log_file.write(f"Operation code,Constant/Address,Address\n")
+    
+    # Ассемблирование инструкций и сохранение в бинарный файл
+    result = assemble(args.instructions_path, args.log_path)
+    save_to_bin(result, args.binary_path)
