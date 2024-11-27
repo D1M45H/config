@@ -22,7 +22,7 @@ class TestDependencyVisualizer(unittest.TestCase):
     def test_create_png(self):
         self.visualizer.get_dependencies()
         self.visualizer.generate_graph()
-        result = self.visualizer.visualize()
+        result = self.visualizer.save_graph()
         self.assertTrue(result)
 
 if __name__ == "__main__":
