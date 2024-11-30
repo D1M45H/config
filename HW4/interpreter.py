@@ -43,7 +43,7 @@ def interpreter(binary_path, result_path, memory_range):
             C = (int.from_bytes(byte_code[i:i+6], "little") >> 15) & 0x1F  # Второй операнд
             D = (int.from_bytes(byte_code[i:i+6], "little") >> 26) & 0x3F  # Первый операнд
             
-            first_operand_address = memory[D]  # Значение по адресу D
+            first_operand_address = D  # Значение по адресу D
             second_operand_value = memory[C]    # Значение по адресу C
             
             if first_operand_address < len(memory):  
