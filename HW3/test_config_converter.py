@@ -31,5 +31,66 @@ class TestConfigConverter(unittest.TestCase):
         result = self.converter.evaluate_expression("{abs -5}")
         self.assertEqual(result, 5)
 
+    def test_parse_value_simple(self):
+        result = self.converter.parse_value('''
+let max_users = 100;
+let timeout = 30;
+app_settings = [
+    max_users,
+    timeout
+];
+''')
+        expected = '''
+app_settings:
+- 100
+- 30
+'''
+        self.assertEqual(result.strip(), expected.strip())
+
+    def test_parse_value_with_nested_arrays(self):
+        result = self.converter.parse_value('''
+let servers = [
+    {"host": "localhost", "port": 8080},
+    {"host": "example.com", "port": 80}
+];
+let max_connections = 200;
+server_settings = [
+    servers,
+    max_connections
+];
+''')
+        expected = '''
+server_settings:
+- - host: localhost
+    port: 8080
+  - host: example.com
+    port: 80
+- 200
+'''
+        self.assertEqual(result.strip(), expected.strip())
+
+    def test_parse_value_with_mixed_types(self):
+        result = self.converter.parse_value('''
+let name = "MyApp";
+let version = "1.0.0";
+config = {
+    app_name: name,
+    app_version: version,
+    features: [
+        "feature1",
+        "feature2"
+    ]
+};
+''')
+        expected = '''
+config:
+  app_name: MyApp
+  app_version: 1.0.0
+  features:
+  - feature1
+  - feature2
+'''
+        self.assertEqual(result.strip(), expected.strip())
+
 if __name__ == '__main__':
     unittest.main()
