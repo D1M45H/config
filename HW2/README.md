@@ -20,4 +20,4 @@
 python visualizer.py
 ```
 ### Результаты тестирования
-![Скриншот результата](photo/Снимок%20экрана%202024-10-24%20212010.png)
+![Скриншот результата](https://github.com/D1M45H/config/blob/main/HW2/dependencies.png/dependency_graph.png.png)
